@@ -5,7 +5,7 @@ var express = require('express'),
   app = express(),
   bodyParser = require('body-parser'),
   engine = require('ejs-locals'),
-  port = 3000;
+  port = 80;
 
 // Express settings
 app.set('port', port);
