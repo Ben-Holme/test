@@ -6,6 +6,7 @@ const links = [
   { to: '/huvudbok', label: 'Huvudbok', icon: '⊞' },
   { to: '/momsrapport', label: 'Momsrapport', icon: '⊕' },
   { to: '/importera', label: 'Importera', icon: '⬆' },
+  { to: '/assistent', label: 'Assistent', icon: '◆' },
 ]
 
 export function Sidebar() {
