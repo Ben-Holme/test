@@ -10,6 +10,8 @@ import { NewTransaction } from './pages/NewTransaction'
 import { EditTransaction } from './pages/EditTransaction'
 import { Ledger } from './pages/Ledger'
 import { VatReport } from './pages/VatReport'
+import { BankImport } from './pages/BankImport'
+import { ClaudeChat } from './pages/ClaudeChat'
 
 const router = createBrowserRouter([
   {
@@ -22,6 +24,8 @@ const router = createBrowserRouter([
       { path: 'transaktioner/:id', element: <EditTransaction /> },
       { path: 'huvudbok', element: <Ledger /> },
       { path: 'momsrapport', element: <VatReport /> },
+      { path: 'importera', element: <BankImport /> },
+      { path: 'assistent', element: <ClaudeChat /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
