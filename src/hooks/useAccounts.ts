@@ -2,8 +2,8 @@ import { useStore } from '../data/store'
 import type { Account } from '../types'
 
 export function useAccounts() {
-  const { state } = useStore()
-  return state.accounts
+  const { accounts } = useStore()
+  return accounts
 }
 
 export function useAccount(id: number): Account | undefined {

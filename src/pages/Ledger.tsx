@@ -1,16 +1,21 @@
 import { useState } from 'react'
-import { useStore } from '../data/store'
+import { useAccounts } from '../hooks/useAccounts'
+import { useTransactions } from '../hooks/useTransactions'
 import { LedgerTable } from '../components/domain/LedgerTable'
 import { accountBalance } from '../lib/ledger'
 import { formatSEK } from '../lib/formatters'
 
 export function Ledger() {
-  const { state } = useStore()
-  const { accounts, transactions } = state
+  const accounts = useAccounts()
+  const { transactions, isLoading } = useTransactions()
   const [selectedAccount, setSelectedAccount] = useState<number>(1920)
 
   const account = accounts.find((a) => a.id === selectedAccount)
   const balance = accountBalance(selectedAccount, transactions)
+
+  if (isLoading) {
+    return <div className="px-8 py-8 text-neutral-500 text-sm">Laddar...</div>
+  }
 
   return (
     <div className="px-8 py-8">

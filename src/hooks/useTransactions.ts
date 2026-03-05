@@ -1,70 +1,73 @@
-import { v4 as uuidv4 } from 'uuid'
-import type { Transaction, TransactionType } from '../types'
-import { useStore } from '../data/store'
-import { autoBookRader } from '../data/bookingRules'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Transaction } from '../types'
+import {
+  fetchTransactions,
+  insertTransaction,
+  updateTransactionStatus,
+  deleteTransaction,
+} from '../data/api'
+import { raderBetalningFaktura, getInvoiceTotal } from '../data/bookingRules'
 import { today } from '../lib/formatters'
 
+export const TRANSACTIONS_KEY = ['transactions'] as const
+
 export function useTransactions() {
-  const { state, dispatch } = useStore()
+  const queryClient = useQueryClient()
 
-  function add(
-    partial: Omit<Transaction, 'id'> & { belopp?: number }
-  ): Transaction {
-    const { belopp, ...rest } = partial
-    const rader =
-      rest.rader.length === 0 && belopp !== undefined
-        ? autoBookRader(rest.typ, belopp)
-        : rest.rader
+  const {
+    data: transactions = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: TRANSACTIONS_KEY,
+    queryFn: fetchTransactions,
+  })
 
-    const t: Transaction = {
-      id: uuidv4(),
-      ...rest,
-      rader,
-    }
-    dispatch({ type: 'ADD_TRANSACTION', payload: t })
-    return t
-  }
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
 
-  function update(t: Transaction) {
-    dispatch({ type: 'UPDATE_TRANSACTION', payload: t })
-  }
+  const addMutation = useMutation({
+    mutationFn: (t: Omit<Transaction, 'id'>) => insertTransaction(t),
+    onSuccess: invalidate,
+  })
 
-  function remove(id: string) {
-    dispatch({ type: 'DELETE_TRANSACTION', payload: id })
-  }
+  const markPaidMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const original = transactions.find((t) => t.id === id)
+      if (!original) throw new Error('Transaction not found')
 
-  function markPaid(id: string) {
-    dispatch({ type: 'MARK_PAID', payload: id })
-  }
+      await updateTransactionStatus(id, 'betald')
 
-  function createInvoice(params: {
-    beskrivning: string
-    typ: TransactionType
-    belopp: number
-    datum?: string
-  }): Transaction {
-    return add({
-      datum: params.datum ?? today(),
-      beskrivning: params.beskrivning,
-      typ: params.typ,
-      status: 'bokförd',
-      rader: [],
-      bilagor: [],
-      belopp: params.belopp,
-    })
-  }
+      const total = getInvoiceTotal(original.rader)
+      await insertTransaction({
+        datum: today(),
+        beskrivning: `Betalning: ${original.beskrivning}`,
+        typ: 'manuell',
+        status: 'bokförd',
+        rader: raderBetalningFaktura(total),
+        bilagor: [],
+      })
+    },
+    onSuccess: invalidate,
+  })
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => deleteTransaction(id),
+    onSuccess: invalidate,
+  })
 
   return {
-    transactions: state.transactions,
-    add,
-    update,
-    remove,
-    markPaid,
-    createInvoice,
+    transactions,
+    isLoading,
+    error,
+    add: (t: Omit<Transaction, 'id'>) => addMutation.mutateAsync(t),
+    markPaid: (id: string) => markPaidMutation.mutate(id),
+    remove: (id: string) => removeMutation.mutate(id),
+    isAdding: addMutation.isPending,
   }
 }
 
 export function useTransaction(id: string): Transaction | undefined {
-  const { state } = useStore()
-  return state.transactions.find((t) => t.id === id)
+  const { transactions } = useTransactions()
+  return transactions.find((t) => t.id === id)
 }

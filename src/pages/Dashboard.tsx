@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useStore } from '../data/store'
+import { useTransactions } from '../hooks/useTransactions'
 import { accountBalance } from '../lib/ledger'
 import { buildVatReport } from '../lib/vatReport'
 import { formatSEK } from '../lib/formatters'
@@ -19,8 +19,7 @@ function currentQuarter(): { from: string; to: string } {
 }
 
 export function Dashboard() {
-  const { state } = useStore()
-  const { transactions } = state
+  const { transactions, isLoading } = useTransactions()
 
   const bankBalance = useMemo(
     () => accountBalance(1920, transactions),
@@ -54,6 +53,10 @@ export function Dashboard() {
         .slice(0, 5),
     [transactions]
   )
+
+  if (isLoading) {
+    return <div className="px-8 py-8 text-neutral-500 text-sm">Laddar...</div>
+  }
 
   return (
     <div className="px-8 py-8 max-w-5xl">
