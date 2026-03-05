@@ -67,6 +67,17 @@ const BAS_ACCOUNTS = [
   { id: 4545, namn: 'Förvärvsmoms utländska tjänster', typ: 'kostnad' },
   { id: 5400, namn: 'Förbrukningsinventarier', typ: 'kostnad' },
   { id: 6570, namn: 'Licenser & SaaS', typ: 'kostnad' },
+  { id: 6592, namn: 'Bankavgifter', typ: 'kostnad' },
+  { id: 6810, namn: 'Registreringsavgifter', typ: 'kostnad' },
+  { id: 7010, namn: 'Löner', typ: 'kostnad' },
+  { id: 1630, namn: 'Skattekonto (Skatteverket)', typ: 'tillgång' },
+  { id: 2081, namn: 'Aktiekapital', typ: 'eget_kapital' },
+  { id: 2091, namn: 'Balanserat resultat', typ: 'eget_kapital' },
+  { id: 2099, namn: 'Årets resultat', typ: 'eget_kapital' },
+  { id: 2510, namn: 'Skatteskulder', typ: 'skuld' },
+  { id: 2518, namn: 'Betald preliminärskatt', typ: 'tillgång' },
+  { id: 2710, namn: 'Personalskatt', typ: 'skuld' },
+  { id: 2730, namn: 'Arbetsgivaravgifter', typ: 'skuld' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -388,6 +399,14 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: CORS })
   }
 
+  // Protected Resource Metadata (RFC 9728) — tells clients where our auth server is
+  if (path.endsWith('/.well-known/oauth-protected-resource')) {
+    return new Response(JSON.stringify({
+      resource: BASE,
+      authorization_servers: [BASE],
+    }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
+  }
+
   // OAuth discovery
   if (path.endsWith('/.well-known/oauth-authorization-server')) {
     return new Response(JSON.stringify({
@@ -430,16 +449,6 @@ Deno.serve(async (req) => {
 
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: CORS })
-  }
-
-  // Validate Bearer token
-  const authHeader = req.headers.get('Authorization') ?? ''
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : url.searchParams.get('apikey') ?? ''
-  if (token !== ANON_KEY) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...CORS, 'Content-Type': 'application/json', 'WWW-Authenticate': `Bearer realm="${BASE}"` },
-    })
   }
 
   // Create Supabase client (service role bypasses RLS)
