@@ -63,6 +63,33 @@ export function EditTransaction() {
         <JournalRows rader={transaction.rader} readOnly />
       </div>
 
+      {transaction.bilagor.length > 0 && (
+        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 mb-4">
+          <div className="text-xs text-neutral-400 mb-3">Bilagor</div>
+          <div className="flex flex-wrap gap-2">
+            {transaction.bilagor.map((url) => {
+              const name = url.split('/').pop() ?? 'fil'
+              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(name)
+              return isImage ? (
+                <a key={url} href={url} target="_blank" rel="noreferrer">
+                  <img src={url} alt={name} className="h-20 w-20 object-cover rounded border border-neutral-700 hover:opacity-80 transition-opacity" />
+                </a>
+              ) : (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 px-3 py-2 rounded border border-neutral-700 text-xs text-neutral-300 hover:text-neutral-100"
+                >
+                  📄 {name}
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
         {transaction.typ === 'faktura_ut' && transaction.status === 'bokförd' && (
           <Button

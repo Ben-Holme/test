@@ -96,3 +96,25 @@ export async function deleteTransaction(id: string): Promise<void> {
 
   if (error) throw new Error(error.message)
 }
+
+export async function uploadBilaga(transactionId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop()
+  const path = `${transactionId}/${Date.now()}.${ext}`
+
+  const { error } = await supabase.storage.from('bilagor').upload(path, file)
+  if (error) throw new Error(error.message)
+
+  const { data } = supabase.storage.from('bilagor').getPublicUrl(path)
+  return data.publicUrl
+}
+
+export async function deleteBilaga(url: string): Promise<void> {
+  // Extract path after /object/public/bilagor/
+  const marker = '/object/public/bilagor/'
+  const idx = url.indexOf(marker)
+  if (idx === -1) return
+  const path = url.slice(idx + marker.length)
+
+  const { error } = await supabase.storage.from('bilagor').remove([path])
+  if (error) throw new Error(error.message)
+}
