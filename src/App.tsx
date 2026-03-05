@@ -1,5 +1,8 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StoreProvider } from './data/store'
+
+const queryClient = new QueryClient()
 import { Shell } from './components/layout/Shell'
 import { Dashboard } from './pages/Dashboard'
 import { Transactions } from './pages/Transactions'
@@ -26,8 +29,10 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <StoreProvider>
-      <RouterProvider router={router} />
-    </StoreProvider>
+    <QueryClientProvider client={queryClient}>
+      <StoreProvider>
+        <RouterProvider router={router} />
+      </StoreProvider>
+    </QueryClientProvider>
   )
 }

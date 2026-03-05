@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useStore } from '../data/store'
+import { useTransactions } from '../hooks/useTransactions'
 import { buildVatReport } from '../lib/vatReport'
 import { VatReportTable } from '../components/domain/VatReportTable'
 
@@ -13,15 +13,19 @@ function quarterBounds(year: number, q: number): { from: string; to: string } {
 }
 
 export function VatReport() {
-  const { state } = useStore()
+  const { transactions, isLoading } = useTransactions()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [quarter, setQuarter] = useState(Math.floor(now.getMonth() / 3))
 
   const { from, to } = quarterBounds(year, quarter)
-  const report = buildVatReport(from, to, state.transactions)
+  const report = buildVatReport(from, to, transactions)
 
   const years = [now.getFullYear() - 1, now.getFullYear()]
+
+  if (isLoading) {
+    return <div className="px-8 py-8 text-neutral-500 text-sm">Laddar...</div>
+  }
 
   return (
     <div className="px-8 py-8 max-w-2xl">

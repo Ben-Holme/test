@@ -7,8 +7,8 @@ export function NewTransaction() {
   const navigate = useNavigate()
   const { add } = useTransactions()
 
-  function handleSave(t: Transaction) {
-    add(t)
+  async function handleSave({ id: _id, ...rest }: Transaction) {
+    await add(rest)
     navigate('/transaktioner')
   }
 
