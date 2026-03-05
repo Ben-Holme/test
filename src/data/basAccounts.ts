@@ -18,6 +18,7 @@ export const BAS_ACCOUNTS: Account[] = [
   { id: 6810, namn: 'Registreringsavgifter', typ: 'kostnad' },
   { id: 7010, namn: 'Löner', typ: 'kostnad' },
   { id: 1630, namn: 'Skattekonto (Skatteverket)', typ: 'tillgång' },
+  { id: 1830, namn: 'Andelar i andra företag', typ: 'tillgång' },
   { id: 2081, namn: 'Aktiekapital', typ: 'eget_kapital' },
   { id: 2091, namn: 'Balanserat resultat', typ: 'eget_kapital' },
   { id: 2099, namn: 'Årets resultat', typ: 'eget_kapital' },
