@@ -378,9 +378,46 @@ function err(id: unknown, message: string, code = -32000): Response {
 // ---------------------------------------------------------------------------
 
 Deno.serve(async (req) => {
+  const url = new URL(req.url)
+  const path = url.pathname
+  const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
+  const BASE = `https://${url.host}/functions/v1/mcp`
+
   // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS })
+  }
+
+  // OAuth discovery
+  if (path.endsWith('/.well-known/oauth-authorization-server')) {
+    return new Response(JSON.stringify({
+      issuer: BASE,
+      authorization_endpoint: `${BASE}/authorize`,
+      token_endpoint: `${BASE}/token`,
+      response_types_supported: ['code'],
+      grant_types_supported: ['authorization_code'],
+      code_challenge_methods_supported: ['S256'],
+    }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
+  }
+
+  // OAuth authorize — immediately redirect to callback with static code
+  if (path.endsWith('/authorize')) {
+    const redirectUri = url.searchParams.get('redirect_uri')
+    const state = url.searchParams.get('state')
+    if (!redirectUri) return new Response('Missing redirect_uri', { status: 400, headers: CORS })
+    const callback = new URL(redirectUri)
+    callback.searchParams.set('code', 'static_code')
+    if (state) callback.searchParams.set('state', state)
+    return Response.redirect(callback.toString(), 302)
+  }
+
+  // OAuth token exchange — return anon key as access token
+  if (path.endsWith('/token') && req.method === 'POST') {
+    return new Response(JSON.stringify({
+      access_token: ANON_KEY,
+      token_type: 'bearer',
+      expires_in: 3600,
+    }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
   }
 
   // Health check
@@ -393,6 +430,16 @@ Deno.serve(async (req) => {
 
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: CORS })
+  }
+
+  // Validate Bearer token
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : url.searchParams.get('apikey') ?? ''
+  if (token !== ANON_KEY) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...CORS, 'Content-Type': 'application/json', 'WWW-Authenticate': `Bearer realm="${BASE}"` },
+    })
   }
 
   // Create Supabase client (service role bypasses RLS)
