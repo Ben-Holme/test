@@ -1,0 +1,17 @@
+import type { Account } from '../types'
+
+export const BAS_ACCOUNTS: Account[] = [
+  { id: 1510, namn: 'Kundfordringar', typ: 'tillgång' },
+  { id: 1650, namn: 'Momsfordran', typ: 'tillgång' },
+  { id: 1920, namn: 'Bankkonto', typ: 'tillgång' },
+  { id: 2610, namn: 'Utgående moms 25%', typ: 'skuld' },
+  { id: 2640, namn: 'Ingående moms', typ: 'tillgång' },
+  { id: 2650, namn: 'Momsredovisning', typ: 'skuld' },
+  { id: 3001, namn: 'Försäljning tjänster SE 25%', typ: 'intäkt' },
+  { id: 3004, namn: 'Försäljning tjänster EU (omvänd)', typ: 'intäkt' },
+  { id: 3006, namn: 'Försäljning tjänster export', typ: 'intäkt' },
+  { id: 4000, namn: 'Inköp varor/tjänster SE', typ: 'kostnad' },
+  { id: 4545, namn: 'Förvärvsmoms utländska tjänster', typ: 'kostnad' },
+  { id: 5400, namn: 'Förbrukningsinventarier', typ: 'kostnad' },
+  { id: 6570, namn: 'Licenser & SaaS', typ: 'kostnad' },
+]
