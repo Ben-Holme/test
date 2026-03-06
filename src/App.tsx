@@ -12,6 +12,7 @@ import { Ledger } from './pages/Ledger'
 import { VatReport } from './pages/VatReport'
 import { BankImport } from './pages/BankImport'
 import { ClaudeChat } from './pages/ClaudeChat'
+import { PasswordGate } from './components/PasswordGate'
 
 const router = createBrowserRouter([
   {
@@ -35,7 +36,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <RouterProvider router={router} />
+        <PasswordGate>
+          <RouterProvider router={router} />
+        </PasswordGate>
       </StoreProvider>
     </QueryClientProvider>
   )
