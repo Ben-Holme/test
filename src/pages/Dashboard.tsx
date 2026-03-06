@@ -22,7 +22,7 @@ export function Dashboard() {
   const { transactions, isLoading } = useTransactions()
 
   const bankBalance = useMemo(
-    () => accountBalance(1920, transactions),
+    () => accountBalance(1930, transactions),
     [transactions]
   )
 
@@ -69,7 +69,7 @@ export function Dashboard() {
       <div className="grid grid-cols-3 gap-4 mb-8">
         <Card>
           <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-3">
-            Banksaldo (1920)
+            Banksaldo (1930)
           </div>
           <div className={`text-2xl font-bold font-mono ${bankBalance >= 0 ? 'text-neutral-100' : 'text-red-400'}`}>
             {formatSEK(bankBalance)}

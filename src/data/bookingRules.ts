@@ -27,32 +27,32 @@ export function raderFakturaUtExport(belopp: number): TransaktionsRad[] {
   ]
 }
 
-/** SE receipt: Dr 5400 (cost) + Dr 2640 (VAT) / Kr 1920 (total) */
+/** SE receipt: Dr 5400 (cost) + Dr 2640 (VAT) / Kr 1930 (total) */
 export function raderKvittoSE(belopp: number): TransaktionsRad[] {
   const moms = Math.round(belopp * 0.25 * 100) / 100
   const total = belopp + moms
   return [
     { konto: 5400, debet: belopp, kredit: 0 },
     { konto: 2640, debet: moms, kredit: 0 },
-    { konto: 1920, debet: 0, kredit: total },
+    { konto: 1930, debet: 0, kredit: total },
   ]
 }
 
-/** SaaS/EU service: Dr 6570 + Dr 2640 / Kr 1920 + Kr 4545 */
+/** SaaS/EU service: Dr 6570 + Dr 2640 / Kr 1930 + Kr 4545 */
 export function raderKvittoEUSaaS(belopp: number): TransaktionsRad[] {
   const moms = Math.round(belopp * 0.25 * 100) / 100
   return [
     { konto: 6570, debet: belopp, kredit: 0 },
     { konto: 2640, debet: moms, kredit: 0 },
-    { konto: 1920, debet: 0, kredit: belopp },
+    { konto: 1930, debet: 0, kredit: belopp },
     { konto: 4545, debet: 0, kredit: moms },
   ]
 }
 
-/** Bank settlement for paid invoice: Dr 1920 / Kr 1510 */
+/** Bank settlement for paid invoice: Dr 1930 / Kr 1510 */
 export function raderBetalningFaktura(belopp: number): TransaktionsRad[] {
   return [
-    { konto: 1920, debet: belopp, kredit: 0 },
+    { konto: 1930, debet: belopp, kredit: 0 },
     { konto: 1510, debet: 0, kredit: belopp },
   ]
 }
@@ -85,18 +85,18 @@ export function getInvoiceTotal(rader: TransaktionsRad[]): number {
 /**
  * Returns a display amount for any transaction type:
  * - Outgoing invoice: 1510 debet (receivable incl. VAT)
- * - Expense/receipt: 1920 kredit (cash out)
- * - Payment received: 1920 debet (cash in)
+ * - Expense/receipt: 1930 kredit (cash out)
+ * - Payment received: 1930 debet (cash in)
  * - Fallback: largest single debet value
  */
 export function getTransactionBelopp(rader: TransaktionsRad[]): number {
   const r1510 = rader.find((r) => r.konto === 1510)
   if (r1510 && r1510.debet > 0) return r1510.debet
 
-  const r1920 = rader.find((r) => r.konto === 1920)
-  if (r1920) {
-    if (r1920.kredit > 0) return r1920.kredit
-    if (r1920.debet > 0) return r1920.debet
+  const r1930 = rader.find((r) => r.konto === 1930)
+  if (r1930) {
+    if (r1930.kredit > 0) return r1930.kredit
+    if (r1930.debet > 0) return r1930.debet
   }
 
   return Math.max(0, ...rader.map((r) => r.debet))

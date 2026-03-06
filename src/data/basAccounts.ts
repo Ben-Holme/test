@@ -3,7 +3,8 @@ import type { Account } from '../types'
 export const BAS_ACCOUNTS: Account[] = [
   { id: 1510, namn: 'Kundfordringar', typ: 'tillgång' },
   { id: 1650, namn: 'Momsfordran', typ: 'tillgång' },
-  { id: 1920, namn: 'Bankkonto', typ: 'tillgång' },
+  { id: 1920, namn: 'Plusgiro', typ: 'tillgång' },
+  { id: 1930, namn: 'Bankkonto', typ: 'tillgång' },
   { id: 2610, namn: 'Utgående moms 25%', typ: 'skuld' },
   { id: 2640, namn: 'Ingående moms', typ: 'tillgång' },
   { id: 2650, namn: 'Momsredovisning', typ: 'skuld' },
