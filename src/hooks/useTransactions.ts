@@ -31,6 +31,11 @@ export function useTransactions() {
     onSuccess: invalidate,
   })
 
+  const markBokfördMutation = useMutation({
+    mutationFn: (id: string) => updateTransactionStatus(id, 'bokförd'),
+    onSuccess: invalidate,
+  })
+
   const markPaidMutation = useMutation({
     mutationFn: async (id: string) => {
       const original = transactions.find((t) => t.id === id)
@@ -61,6 +66,7 @@ export function useTransactions() {
     isLoading,
     error,
     add: (t: Omit<Transaction, 'id'>) => addMutation.mutateAsync(t),
+    markBokförd: (id: string) => markBokfördMutation.mutate(id),
     markPaid: (id: string) => markPaidMutation.mutate(id),
     remove: (id: string) => removeMutation.mutate(id),
     isAdding: addMutation.isPending,

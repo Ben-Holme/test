@@ -97,6 +97,15 @@ export async function deleteTransaction(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
+export async function updateTransactionBilagor(id: string, bilagor: string[]): Promise<void> {
+  const { error } = await supabase
+    .from('transactions')
+    .update({ bilagor })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+}
+
 export async function uploadBilaga(transactionId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop()
   const path = `${transactionId}/${Date.now()}.${ext}`
