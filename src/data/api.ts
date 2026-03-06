@@ -4,6 +4,7 @@ import type { Transaction, TransactionStatus, TransaktionsRad } from '../types'
 // Shape returned by Supabase join
 interface RawTransaction {
   id: string
+  nr?: number
   datum: string
   beskrivning: string
   typ: string
@@ -16,6 +17,7 @@ interface RawTransaction {
 function mapRow(raw: RawTransaction): Transaction {
   return {
     id: raw.id,
+    nr: raw.nr,
     datum: raw.datum,
     beskrivning: raw.beskrivning,
     typ: raw.typ as Transaction['typ'],

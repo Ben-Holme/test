@@ -32,6 +32,7 @@ export function TransactionList({
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-neutral-800/50 text-neutral-400 text-xs uppercase tracking-wide">
+            <th className="text-right px-4 py-3">Nr</th>
             <th className="text-left px-4 py-3">Datum</th>
             <th className="text-left px-4 py-3">Beskrivning</th>
             <th className="text-left px-4 py-3">Typ</th>
@@ -49,6 +50,9 @@ export function TransactionList({
                 className="hover:bg-neutral-800/30 transition-colors cursor-pointer"
                 onClick={() => navigate(`/transaktioner/${t.id}`)}
               >
+                <td className="px-4 py-3 text-right text-neutral-500 whitespace-nowrap font-mono text-xs">
+                  {t.nr ?? '—'}
+                </td>
                 <td className="px-4 py-3 text-neutral-400 whitespace-nowrap font-mono text-xs">
                   {formatDate(t.datum)}
                 </td>

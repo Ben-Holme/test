@@ -29,6 +29,7 @@ export interface TransaktionsRad {
 
 export interface Transaction {
   id: string
+  nr?: number
   datum: string // YYYY-MM-DD
   beskrivning: string
   typ: TransactionType

@@ -75,6 +75,9 @@ export function EditTransaction() {
             {transaction.beskrivning}
           </h1>
           <div className="flex items-center gap-2">
+            {transaction.nr && (
+              <span className="text-xs font-mono text-neutral-500">#{transaction.nr}</span>
+            )}
             <StatusBadge status={transaction.status} />
             <TypeBadge typ={transaction.typ} />
             <span className="text-xs text-neutral-500">{formatDate(transaction.datum)}</span>
