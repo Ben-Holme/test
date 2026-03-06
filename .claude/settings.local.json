@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(supabase --version)",
+      "Bash(npm install -g supabase)",
+      "Bash(winget install Supabase.Supabase)",
+      "Bash(scoop bucket add supabase https://github.com/supabase/scoop-bucket.git)",
+      "Bash(scoop install supabase)",
+      "Bash(curl -sL https://github.com/supabase/cli/releases/latest/download/supabase_windows_amd64.tar.gz -o /tmp/supabase.tar.gz)",
+      "Bash(tar -xzf /tmp/supabase.tar.gz -C /tmp)",
+      "Bash(ls /tmp/supabase*)"
+    ]
+  }
+}

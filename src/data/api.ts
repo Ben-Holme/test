@@ -97,34 +97,24 @@ export async function deleteTransaction(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-// ---------------------------------------------------------------------------
-// Attachments (Supabase Storage bucket: "bilagor")
-// Paths are stored as "{transactionId}/{filename}" in the bilagor TEXT[] column.
-// ---------------------------------------------------------------------------
-
-const BUCKET = 'bilagor'
-
 export async function uploadBilaga(transactionId: string, file: File): Promise<string> {
-  // Sanitise: replace spaces so URLs stay clean
-  const safeName = file.name.replace(/\s+/g, '_')
-  const path = `${transactionId}/${safeName}`
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
+  const ext = file.name.split('.').pop()
+  const path = `${transactionId}/${Date.now()}.${ext}`
+
+  const { error } = await supabase.storage.from('bilagor').upload(path, file)
   if (error) throw new Error(error.message)
-  return path
+
+  const { data } = supabase.storage.from('bilagor').getPublicUrl(path)
+  return data.publicUrl
 }
 
-export async function deleteBilaga(path: string): Promise<void> {
-  const { error } = await supabase.storage.from(BUCKET).remove([path])
-  if (error) throw new Error(error.message)
-}
+export async function deleteBilaga(url: string): Promise<void> {
+  // Extract path after /object/public/bilagor/
+  const marker = '/object/public/bilagor/'
+  const idx = url.indexOf(marker)
+  if (idx === -1) return
+  const path = url.slice(idx + marker.length)
 
-export async function updateBilagor(id: string, bilagor: string[]): Promise<void> {
-  const { error } = await supabase.from('transactions').update({ bilagor }).eq('id', id)
+  const { error } = await supabase.storage.from('bilagor').remove([path])
   if (error) throw new Error(error.message)
-}
-
-export async function getBilagaUrl(path: string): Promise<string> {
-  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60)
-  if (error || !data) throw new Error(error?.message ?? 'Could not get signed URL')
-  return data.signedUrl
 }

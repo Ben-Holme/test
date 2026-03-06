@@ -54,6 +54,9 @@ export function TransactionList({
                 </td>
                 <td className="px-4 py-3 text-neutral-100 max-w-xs truncate">
                   {t.beskrivning}
+                  {t.bilagor.length > 0 && (
+                    <span className="ml-2 text-xs text-neutral-500">📎 {t.bilagor.length}</span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <TypeBadge typ={t.typ} />
