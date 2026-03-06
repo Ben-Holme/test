@@ -164,19 +164,6 @@ Rows MUST balance: sum(debet) = sum(kredit).`,
     },
   },
   {
-    name: 'upload_attachment',
-    description: 'Upload an image or PDF as an attachment. Pass the file as base64-encoded data. Returns a public URL that can be passed in bilagor when creating a transaction.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        filename: { type: 'string', description: 'File name with extension e.g. kvitto.jpg or faktura.pdf' },
-        data: { type: 'string', description: 'Base64-encoded file content' },
-        transaction_id: { type: 'string', description: 'Optional transaction UUID to group the file under' },
-      },
-      required: ['filename', 'data'],
-    },
-  },
-  {
     name: 'delete_transaction',
     description: 'Delete a transaction and all its accounting rows. Irreversible.',
     inputSchema: {
@@ -341,32 +328,6 @@ async function executeTool(
     return `Transaction ${args.id} updated to ${args.status}`
   }
 
-  if (name === 'upload_attachment') {
-    const { filename, data, transaction_id = 'standalone' } = args as {
-      filename: string
-      data: string
-      transaction_id?: string
-    }
-
-    const ext = filename.split('.').pop()?.toLowerCase() ?? 'bin'
-    const mimeTypes: Record<string, string> = {
-      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-      gif: 'image/gif', webp: 'image/webp', pdf: 'application/pdf',
-    }
-    const contentType = mimeTypes[ext] ?? 'application/octet-stream'
-
-    const binary = atob(data)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-
-    const path = `${transaction_id}/${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('bilagor').upload(path, bytes, { contentType })
-    if (error) throw new Error(error.message)
-
-    const { data: urlData } = supabase.storage.from('bilagor').getPublicUrl(path)
-    return JSON.stringify({ url: urlData.publicUrl })
-  }
-
   if (name === 'delete_transaction') {
     const { error } = await supabase.from('transactions').delete().eq('id', args.id)
     if (error) throw new Error(error.message)
@@ -488,7 +449,7 @@ Deno.serve(async (req) => {
   // Health check
   if (req.method === 'GET') {
     return new Response(
-      JSON.stringify({ ok: true, server: 'vantör-bokföring', tools: TOOLS.length }),
+      JSON.stringify({ ok: true, server: 'vantör-bokföring', tools: TOOLS.length, note: 'Attachments via web app only' }),
       { headers: { ...CORS, 'Content-Type': 'application/json' } },
     )
   }
