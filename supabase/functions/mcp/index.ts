@@ -181,6 +181,15 @@ Returns: utgåendeMoms (box 05), ingåendeMoms (box 48), nettoMoms (box 49, posi
       required: ['from_date', 'to_date'],
     },
   },
+  {
+    name: 'get_bilaga_urls',
+    description: 'Get 1-hour signed download URLs for all attachments on a transaction. Use this to inspect receipts or invoices that have been uploaded via the web app.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string', description: 'Transaction UUID' } },
+      required: ['id'],
+    },
+  },
 ]
 
 // ---------------------------------------------------------------------------
@@ -331,6 +340,24 @@ async function executeTool(
       rows,
       closing_balance: rows.at(-1)?.saldo ?? 0,
     }, null, 2)
+  }
+
+  if (name === 'get_bilaga_urls') {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('bilagor')
+      .eq('id', args.id)
+      .single()
+    if (error || !data) throw new Error(error?.message ?? 'Transaction not found')
+    const paths: string[] = (data as { bilagor: string[] }).bilagor ?? []
+    if (paths.length === 0) return 'Inga bifogade underlag.'
+    const signed = await Promise.all(
+      paths.map(async (path) => {
+        const { data: s, error: e } = await supabase.storage.from('bilagor').createSignedUrl(path, 3600)
+        return { path, url: e || !s ? null : s.signedUrl }
+      }),
+    )
+    return JSON.stringify(signed, null, 2)
   }
 
   if (name === 'get_vat_report') {

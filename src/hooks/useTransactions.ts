@@ -5,6 +5,9 @@ import {
   insertTransaction,
   updateTransactionStatus,
   deleteTransaction,
+  uploadBilaga,
+  deleteBilaga,
+  updateBilagor,
 } from '../data/api'
 import { raderBetalningFaktura, getInvoiceTotal } from '../data/bookingRules'
 import { today } from '../lib/formatters'
@@ -56,6 +59,26 @@ export function useTransactions() {
     onSuccess: invalidate,
   })
 
+  const attachMutation = useMutation({
+    mutationFn: async ({ transactionId, file }: { transactionId: string; file: File }) => {
+      const transaction = transactions.find((t) => t.id === transactionId)
+      if (!transaction) throw new Error('Transaction not found')
+      const path = await uploadBilaga(transactionId, file)
+      await updateBilagor(transactionId, [...transaction.bilagor, path])
+    },
+    onSuccess: invalidate,
+  })
+
+  const detachMutation = useMutation({
+    mutationFn: async ({ transactionId, path }: { transactionId: string; path: string }) => {
+      const transaction = transactions.find((t) => t.id === transactionId)
+      if (!transaction) throw new Error('Transaction not found')
+      await deleteBilaga(path)
+      await updateBilagor(transactionId, transaction.bilagor.filter((p) => p !== path))
+    },
+    onSuccess: invalidate,
+  })
+
   return {
     transactions,
     isLoading,
@@ -64,6 +87,9 @@ export function useTransactions() {
     markPaid: (id: string) => markPaidMutation.mutate(id),
     remove: (id: string) => removeMutation.mutate(id),
     isAdding: addMutation.isPending,
+    attachFile: (args: { transactionId: string; file: File }) => attachMutation.mutateAsync(args),
+    detachFile: (args: { transactionId: string; path: string }) => detachMutation.mutateAsync(args),
+    isAttaching: attachMutation.isPending,
   }
 }
 

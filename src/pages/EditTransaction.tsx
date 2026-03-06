@@ -1,6 +1,7 @@
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useTransaction, useTransactions } from '../hooks/useTransactions'
 import { JournalRows } from '../components/domain/TransactionForm/JournalRows'
+import { BilagorSection } from '../components/domain/BilagorSection'
 import { StatusBadge, TypeBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { formatDate, formatSEK } from '../lib/formatters'
@@ -62,6 +63,8 @@ export function EditTransaction() {
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-4">
         <JournalRows rader={transaction.rader} readOnly />
       </div>
+
+      <BilagorSection transaction={transaction} />
 
       <div className="flex items-center gap-3">
         {transaction.typ === 'faktura_ut' && transaction.status === 'bokförd' && (

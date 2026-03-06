@@ -96,3 +96,35 @@ export async function deleteTransaction(id: string): Promise<void> {
 
   if (error) throw new Error(error.message)
 }
+
+// ---------------------------------------------------------------------------
+// Attachments (Supabase Storage bucket: "bilagor")
+// Paths are stored as "{transactionId}/{filename}" in the bilagor TEXT[] column.
+// ---------------------------------------------------------------------------
+
+const BUCKET = 'bilagor'
+
+export async function uploadBilaga(transactionId: string, file: File): Promise<string> {
+  // Sanitise: replace spaces so URLs stay clean
+  const safeName = file.name.replace(/\s+/g, '_')
+  const path = `${transactionId}/${safeName}`
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
+  if (error) throw new Error(error.message)
+  return path
+}
+
+export async function deleteBilaga(path: string): Promise<void> {
+  const { error } = await supabase.storage.from(BUCKET).remove([path])
+  if (error) throw new Error(error.message)
+}
+
+export async function updateBilagor(id: string, bilagor: string[]): Promise<void> {
+  const { error } = await supabase.from('transactions').update({ bilagor }).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function getBilagaUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60)
+  if (error || !data) throw new Error(error?.message ?? 'Could not get signed URL')
+  return data.signedUrl
+}
