@@ -90,12 +90,6 @@ export function EditTransaction() {
         )}
       </div>
 
-      {(transaction.status === 'bokförd' || transaction.status === 'betald') && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-amber-950/40 border border-amber-800/50 rounded-lg text-xs text-amber-400 mb-4">
-          Bokförd — kan ej redigeras
-        </div>
-      )}
-
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-4">
         <JournalRows rader={transaction.rader} readOnly />
       </div>
@@ -175,7 +169,7 @@ export function EditTransaction() {
             Markera betald
           </Button>
         )}
-        <Button variant="danger" onClick={handleDelete} disabled={transaction.status !== 'utkast'}>
+        <Button variant="danger" onClick={handleDelete}>
           Ta bort
         </Button>
       </div>
