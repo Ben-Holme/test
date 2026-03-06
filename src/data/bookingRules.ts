@@ -81,3 +81,23 @@ export function getInvoiceTotal(rader: TransaktionsRad[]): number {
   const rad = rader.find((r) => r.konto === 1510)
   return rad ? rad.debet : 0
 }
+
+/**
+ * Returns a display amount for any transaction type:
+ * - Outgoing invoice: 1510 debet (receivable incl. VAT)
+ * - Expense/receipt: 1920 kredit (cash out)
+ * - Payment received: 1920 debet (cash in)
+ * - Fallback: largest single debet value
+ */
+export function getTransactionBelopp(rader: TransaktionsRad[]): number {
+  const r1510 = rader.find((r) => r.konto === 1510)
+  if (r1510 && r1510.debet > 0) return r1510.debet
+
+  const r1920 = rader.find((r) => r.konto === 1920)
+  if (r1920) {
+    if (r1920.kredit > 0) return r1920.kredit
+    if (r1920.debet > 0) return r1920.debet
+  }
+
+  return Math.max(0, ...rader.map((r) => r.debet))
+}

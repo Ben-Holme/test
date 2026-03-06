@@ -5,7 +5,7 @@ import { JournalRows } from '../components/domain/TransactionForm/JournalRows'
 import { StatusBadge, TypeBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { formatDate, formatSEK } from '../lib/formatters'
-import { getInvoiceTotal } from '../data/bookingRules'
+import { getTransactionBelopp } from '../data/bookingRules'
 import { uploadBilaga, deleteBilaga, updateTransactionBilagor } from '../data/api'
 
 export function EditTransaction() {
@@ -59,7 +59,7 @@ export function EditTransaction() {
     navigate('/transaktioner')
   }
 
-  const total = getInvoiceTotal(transaction.rader)
+  const total = getTransactionBelopp(transaction.rader)
 
   return (
     <div className="px-8 py-8 max-w-2xl">

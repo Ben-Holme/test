@@ -3,7 +3,7 @@ import type { Transaction } from '../../types'
 import { StatusBadge, TypeBadge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { formatDate, formatSEK } from '../../lib/formatters'
-import { getInvoiceTotal } from '../../data/bookingRules'
+import { getTransactionBelopp } from '../../data/bookingRules'
 
 interface TransactionListProps {
   transactions: Transaction[]
@@ -42,7 +42,7 @@ export function TransactionList({
         </thead>
         <tbody className="divide-y divide-neutral-800">
           {transactions.map((t) => {
-            const total = getInvoiceTotal(t.rader)
+            const total = getTransactionBelopp(t.rader)
             return (
               <tr
                 key={t.id}
