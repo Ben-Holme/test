@@ -142,6 +142,11 @@ Rows MUST balance: sum(debet) = sum(kredit).`,
             required: ['konto', 'debet', 'kredit'],
           },
         },
+        bilagor: {
+          type: 'array',
+          description: 'Optional list of attachment URLs (uploaded via the web app)',
+          items: { type: 'string' },
+        },
       },
       required: ['datum', 'beskrivning', 'typ', 'rader'],
     },
@@ -288,17 +293,18 @@ async function executeTool(
   }
 
   if (name === 'create_transaction') {
-    const { datum, beskrivning, typ, status = 'bokförd', rader } = args as {
+    const { datum, beskrivning, typ, status = 'bokförd', rader, bilagor = [] } = args as {
       datum: string
       beskrivning: string
       typ: TransactionType
       status?: TransactionStatus
       rader: TransaktionsRad[]
+      bilagor?: string[]
     }
 
     const { data: txRow, error: txError } = await supabase
       .from('transactions')
-      .insert({ datum, beskrivning, typ, status, bilagor: [] })
+      .insert({ datum, beskrivning, typ, status, bilagor })
       .select('id')
       .single()
 
