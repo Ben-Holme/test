@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useTransaction, useTransactions } from '../hooks/useTransactions'
 import { JournalRows } from '../components/domain/TransactionForm/JournalRows'
@@ -19,10 +19,8 @@ export function EditTransaction() {
 
   const currentBilagor = bilagor ?? transaction?.bilagor ?? []
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!transaction) return
-    const files = Array.from(e.target.files ?? [])
-    if (!files.length) return
+  async function uploadFiles(files: File[]) {
+    if (!transaction || !files.length) return
     setUploading(true)
     try {
       const urls = await Promise.all(files.map((f) => uploadBilaga(transaction.id, f)))
@@ -34,6 +32,22 @@ export function EditTransaction() {
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    await uploadFiles(Array.from(e.target.files ?? []))
+  }
+
+  useEffect(() => {
+    function handlePaste(e: ClipboardEvent) {
+      const images = Array.from(e.clipboardData?.items ?? [])
+        .filter((item) => item.type.startsWith('image/'))
+        .map((item) => item.getAsFile())
+        .filter((f): f is File => f !== null)
+      if (images.length) uploadFiles(images)
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  }, [transaction, currentBilagor])
 
   async function handleRemoveBilaga(url: string) {
     if (!transaction) return
@@ -99,7 +113,7 @@ export function EditTransaction() {
 
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-neutral-400">Bilagor</span>
+          <span className="text-xs text-neutral-400">Bilagor <span className="text-neutral-600">(eller klistra in bild)</span></span>
           <button
             type="button"
             className="text-xs text-sky-400 hover:text-sky-300 disabled:opacity-50"
