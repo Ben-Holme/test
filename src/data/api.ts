@@ -108,6 +108,7 @@ export async function updateTransactionBilagor(id: string, bilagor: string[]): P
   if (error) throw new Error(error.message)
 }
 
+
 export async function uploadBilaga(transactionId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop()
   const path = `${transactionId}/${Date.now()}.${ext}`
