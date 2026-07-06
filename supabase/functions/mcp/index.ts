@@ -294,29 +294,66 @@ async function executeTool(
   }
 
   if (name === 'create_transaction') {
-    const { datum, beskrivning, typ, status = 'bokförd', rader, bilagor = [] } = args as {
+    let { datum, beskrivning, typ, status = 'bokförd', rader, bilagor = [] } = args as {
       datum: string
       beskrivning: string
       typ: TransactionType
       status?: TransactionStatus
-      rader: TransaktionsRad[]
-      bilagor?: string[]
+      rader: TransaktionsRad[] | string
+      bilagor?: string[] | string
     }
 
-    const { data: txRow, error: txError } = await supabase
-      .from('transactions')
-      .insert({ datum, beskrivning, typ, status, bilagor })
-      .select('id')
-      .single()
+    // Some MCP clients serialize array/object params as JSON strings instead
+    // of native arrays — parse defensively rather than crashing on `.map`.
+    if (typeof rader === 'string') {
+      try {
+        rader = JSON.parse(rader)
+      } catch {
+        throw new Error('Invalid `rader`: expected an array of journal rows, got a string that is not valid JSON')
+      }
+    }
+    if (typeof bilagor === 'string') {
+      try {
+        bilagor = JSON.parse(bilagor)
+      } catch {
+        throw new Error('Invalid `bilagor`: expected an array of URLs, got a string that is not valid JSON')
+      }
+    }
 
-    if (txError || !txRow) throw new Error(txError?.message ?? 'Insert failed')
-    const id = (txRow as { id: string }).id
+    if (!Array.isArray(rader)) throw new Error('`rader` must be an array of journal rows')
+    if (!Array.isArray(bilagor)) throw new Error('`bilagor` must be an array of attachment URLs')
 
-    const { error: raderError } = await supabase
-      .from('transaction_rader')
-      .insert(rader.map((r) => ({ transaction_id: id, ...r })))
+    // Validate before writing anything.
+    if (rader.length === 0) throw new Error('`rader` cannot be empty — at least one journal row is required')
 
-    if (raderError) throw new Error(raderError.message)
+    rader.forEach((r, i) => {
+      if (r == null || typeof r !== 'object') throw new Error(`rader[${i}] is not a valid row object`)
+      if (r.konto === undefined || r.konto === null) throw new Error(`rader[${i}] is missing \`konto\``)
+      if (r.debet === undefined || r.debet === null) throw new Error(`rader[${i}] is missing \`debet\``)
+      if (r.kredit === undefined || r.kredit === null) throw new Error(`rader[${i}] is missing \`kredit\``)
+    })
+
+    const sumDebet = rader.reduce((s, r) => s + Number(r.debet), 0)
+    const sumKredit = rader.reduce((s, r) => s + Number(r.kredit), 0)
+    if (Math.round(sumDebet * 100) !== Math.round(sumKredit * 100)) {
+      throw new Error(
+        `Rader are not balanced: sum(debet)=${sumDebet.toFixed(2)} !== sum(kredit)=${sumKredit.toFixed(2)}`,
+      )
+    }
+
+    // Header + rows are inserted atomically in a single Postgres function —
+    // if the rows insert fails, the header insert is rolled back too, so we
+    // never leave an orphaned transaction with zero rows.
+    const { data: id, error } = await supabase.rpc('create_transaction_with_rows', {
+      p_datum: datum,
+      p_beskrivning: beskrivning,
+      p_typ: typ,
+      p_status: status,
+      p_bilagor: bilagor,
+      p_rader: rader,
+    })
+
+    if (error) throw new Error(error.message)
     return `Verifikation skapad: ${id}`
   }
 
