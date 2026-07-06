@@ -28,8 +28,8 @@ export function TransactionList({
   }
 
   return (
-    <div className="rounded-lg border border-neutral-800 overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="rounded-lg border border-neutral-800 overflow-x-auto">
+      <table className="w-full text-sm min-w-[720px]">
         <thead>
           <tr className="bg-neutral-800/50 text-neutral-400 text-xs uppercase tracking-wide">
             <th className="text-right px-4 py-3">Nr</th>

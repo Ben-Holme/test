@@ -91,7 +91,7 @@ export function TransactionForm({ initial, onSave, onCancel }: TransactionFormPr
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="Typ"
           value={values.typ}
@@ -194,7 +194,7 @@ export function TransactionForm({ initial, onSave, onCancel }: TransactionFormPr
                   )}
                   <button
                     type="button"
-                    className="absolute -top-1 -right-1 bg-neutral-900 text-neutral-400 hover:text-red-400 rounded-full w-4 h-4 text-xs hidden group-hover:flex items-center justify-center"
+                    className="absolute -top-1.5 -right-1.5 bg-neutral-900 text-neutral-400 hover:text-red-400 rounded-full w-5 h-5 text-xs flex items-center justify-center border border-neutral-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                     onClick={() => handleRemoveBilaga(url)}
                   >
                     ×

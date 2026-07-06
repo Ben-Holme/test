@@ -14,11 +14,11 @@ export function Ledger() {
   const balance = accountBalance(selectedAccount, transactions)
 
   if (isLoading) {
-    return <div className="px-8 py-8 text-neutral-500 text-sm">Laddar...</div>
+    return <div className="px-4 sm:px-8 py-8 text-neutral-500 text-sm">Laddar...</div>
   }
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 sm:px-8 py-6 sm:py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-neutral-100">Huvudbok</h1>
         <p className="text-sm text-neutral-500 mt-1">
@@ -26,15 +26,15 @@ export function Ledger() {
         </p>
       </div>
 
-      <div className="flex items-end gap-4 mb-6">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-end gap-4 mb-6">
+        <div className="flex flex-col gap-1 w-full sm:w-auto">
           <label className="text-xs font-medium text-neutral-400 uppercase tracking-wide">
             Konto
           </label>
           <select
             value={selectedAccount}
             onChange={(e) => setSelectedAccount(Number(e.target.value))}
-            className="bg-neutral-800 border border-neutral-700 rounded-md px-3 py-2 text-sm text-neutral-100 focus:outline-none focus:ring-1 focus:ring-sky-500 min-w-72"
+            className="bg-neutral-800 border border-neutral-700 rounded-md px-3 py-2 text-sm text-neutral-100 focus:outline-none focus:ring-1 focus:ring-sky-500 w-full sm:min-w-72"
           >
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
