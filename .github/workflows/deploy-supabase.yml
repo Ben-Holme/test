@@ -2,7 +2,7 @@ name: Deploy Supabase (migrations + mcp function)
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'supabase/**'
   workflow_dispatch: {}
