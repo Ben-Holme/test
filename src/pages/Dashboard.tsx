@@ -2,23 +2,9 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useTransactions } from '../hooks/useTransactions'
 import { accountBalance } from '../lib/ledger'
-import { buildVatReport } from '../lib/vatReport'
 import { formatSEK } from '../lib/formatters'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-
-function last12Months(): { from: string; to: string } {
-  const now = new Date()
-  const toYear = now.getFullYear()
-  const toMonth = now.getMonth() + 1
-  const toLastDay = new Date(toYear, toMonth, 0).getDate()
-  const to = `${toYear}-${String(toMonth).padStart(2, '0')}-${toLastDay}`
-
-  const fromDate = new Date(toYear, now.getMonth() - 11, 1)
-  const from = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-01`
-
-  return { from, to }
-}
 
 export function Dashboard() {
   const { transactions, isLoading } = useTransactions()
@@ -42,10 +28,17 @@ export function Dashboard() {
     [unpaidInvoices]
   )
 
-  const { from, to } = last12Months()
-  const vatReport = useMemo(
-    () => buildVatReport(from, to, transactions),
-    [from, to, transactions]
+  // Outstanding VAT liability: a running balance across all booked/paid
+  // transactions, not a calendar period — it only shrinks once a payment to
+  // Skatteverket is actually booked against these accounts.
+  const outstandingMoms = useMemo(
+    () =>
+      -(
+        accountBalance(2610, transactions) +
+        accountBalance(2640, transactions) +
+        accountBalance(4545, transactions)
+      ),
+    [transactions]
   )
 
   const recentTransactions = useMemo(
@@ -94,13 +87,13 @@ export function Dashboard() {
 
         <Card>
           <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-3">
-            Moms att betala (12 mån)
+            Moms att betala
           </div>
-          <div className={`text-2xl font-bold font-mono ${vatReport.nettoMoms >= 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-            {formatSEK(Math.abs(vatReport.nettoMoms))}
+          <div className={`text-2xl font-bold font-mono ${outstandingMoms >= 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+            {formatSEK(Math.abs(outstandingMoms))}
           </div>
           <div className="text-xs text-neutral-500 mt-1">
-            {vatReport.nettoMoms >= 0 ? 'att betala' : 'att återfå'}
+            {outstandingMoms >= 0 ? 'att betala' : 'att återfå'}
           </div>
         </Card>
       </div>
