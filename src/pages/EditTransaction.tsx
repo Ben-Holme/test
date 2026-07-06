@@ -59,7 +59,7 @@ export function EditTransaction() {
 
   if (!transaction) {
     return (
-      <div className="px-8 py-8">
+      <div className="px-4 sm:px-8 py-8">
         <div className="text-neutral-400">Transaktion hittades inte.</div>
         <Link to="/transaktioner" className="text-sky-400 text-sm mt-2 inline-block">
           ← Tillbaka
@@ -76,19 +76,19 @@ export function EditTransaction() {
   const total = getTransactionBelopp(transaction.rader)
 
   return (
-    <div className="px-8 py-8 max-w-2xl">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-2xl">
       <div className="mb-2">
         <Link to="/transaktioner" className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors">
           ← Transaktioner
         </Link>
       </div>
 
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-neutral-100 mb-2">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-neutral-100 mb-2 break-words">
             {transaction.beskrivning}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {transaction.nr && (
               <span className="text-xs font-mono text-neutral-500">#{transaction.nr}</span>
             )}
@@ -98,7 +98,7 @@ export function EditTransaction() {
           </div>
         </div>
         {total > 0 && (
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <div className="text-xs text-neutral-500 mb-1">Belopp</div>
             <div className="text-xl font-bold font-mono text-neutral-100">
               {formatSEK(total)}
@@ -107,7 +107,7 @@ export function EditTransaction() {
         )}
       </div>
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-4">
+      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 sm:p-6 mb-4">
         <JournalRows rader={transaction.rader} readOnly />
       </div>
 
@@ -151,7 +151,7 @@ export function EditTransaction() {
                   )}
                   <button
                     type="button"
-                    className="absolute -top-1 -right-1 bg-neutral-900 text-neutral-400 hover:text-red-400 rounded-full w-4 h-4 text-xs hidden group-hover:flex items-center justify-center"
+                    className="absolute -top-1.5 -right-1.5 bg-neutral-900 text-neutral-400 hover:text-red-400 rounded-full w-5 h-5 text-xs flex items-center justify-center border border-neutral-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                     onClick={() => handleRemoveBilaga(url)}
                   >
                     ×

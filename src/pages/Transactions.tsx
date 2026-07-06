@@ -18,8 +18,8 @@ export function Transactions() {
     .sort((a, b) => b.datum.localeCompare(a.datum))
 
   return (
-    <div className="px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-neutral-100">Transaktioner</h1>
           <p className="text-sm text-neutral-500 mt-1">
@@ -32,7 +32,7 @@ export function Transactions() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as TransactionStatus | 'all')}

@@ -53,22 +53,27 @@ export function JournalRows({ rader, onChange, readOnly = false }: JournalRowsPr
       <div className="text-xs font-medium text-neutral-400 uppercase tracking-wide mb-2">
         Konteringsrader
       </div>
-      <div className="rounded-lg border border-neutral-800 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-lg border border-neutral-800 overflow-x-auto">
+        <table className="w-full text-xs sm:text-sm">
           <thead>
             <tr className="bg-neutral-800/50 text-neutral-400 text-xs">
-              <th className="text-left px-3 py-2">Konto</th>
-              <th className="text-right px-3 py-2">Debet</th>
-              <th className="text-right px-3 py-2">Kredit</th>
+              <th className="text-left px-2 sm:px-3 py-2">Konto</th>
+              <th className="text-right px-2 sm:px-3 py-2">Debet</th>
+              <th className="text-right px-2 sm:px-3 py-2">Kredit</th>
               {!readOnly && <th className="w-8" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800">
             {rader.map((r, i) => (
               <tr key={i} className="bg-neutral-900/50">
-                <td className="px-3 py-2">
+                <td className="px-2 sm:px-3 py-2 max-w-[5.5rem] sm:max-w-none">
                   {readOnly ? (
-                    <span className="font-mono text-neutral-300">{accountName(r.konto)}</span>
+                    <span
+                      className="font-mono text-neutral-300 block truncate"
+                      title={accountName(r.konto)}
+                    >
+                      {accountName(r.konto)}
+                    </span>
                   ) : (
                     <input
                       type="number"
@@ -79,7 +84,7 @@ export function JournalRows({ rader, onChange, readOnly = false }: JournalRowsPr
                     />
                   )}
                 </td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-2 sm:px-3 py-2 text-right">
                   {readOnly ? (
                     <span className={`font-mono ${r.debet > 0 ? 'text-neutral-100' : 'text-neutral-600'}`}>
                       {r.debet > 0 ? formatSEK(r.debet) : '—'}
@@ -95,7 +100,7 @@ export function JournalRows({ rader, onChange, readOnly = false }: JournalRowsPr
                     />
                   )}
                 </td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-2 sm:px-3 py-2 text-right">
                   {readOnly ? (
                     <span className={`font-mono ${r.kredit > 0 ? 'text-neutral-100' : 'text-neutral-600'}`}>
                       {r.kredit > 0 ? formatSEK(r.kredit) : '—'}
@@ -127,11 +132,11 @@ export function JournalRows({ rader, onChange, readOnly = false }: JournalRowsPr
           </tbody>
           <tfoot>
             <tr className="bg-neutral-800/30 text-xs font-medium">
-              <td className="px-3 py-2 text-neutral-400">Summa</td>
-              <td className="px-3 py-2 text-right font-mono text-neutral-200">
+              <td className="px-2 sm:px-3 py-2 text-neutral-400">Summa</td>
+              <td className="px-2 sm:px-3 py-2 text-right font-mono text-neutral-200">
                 {formatSEK(totalDebet)}
               </td>
-              <td className="px-3 py-2 text-right font-mono text-neutral-200">
+              <td className="px-2 sm:px-3 py-2 text-right font-mono text-neutral-200">
                 {formatSEK(totalKredit)}
               </td>
               <td />

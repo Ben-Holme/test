@@ -24,11 +24,11 @@ export function VatReport() {
   const years = [now.getFullYear() - 1, now.getFullYear()]
 
   if (isLoading) {
-    return <div className="px-8 py-8 text-neutral-500 text-sm">Laddar...</div>
+    return <div className="px-4 sm:px-8 py-8 text-neutral-500 text-sm">Laddar...</div>
   }
 
   return (
-    <div className="px-8 py-8 max-w-2xl">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-neutral-100">Momsrapport</h1>
         <p className="text-sm text-neutral-500 mt-1">
