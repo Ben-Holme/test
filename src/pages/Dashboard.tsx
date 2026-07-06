@@ -7,14 +7,16 @@ import { formatSEK } from '../lib/formatters'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 
-function currentQuarter(): { from: string; to: string } {
+function last12Months(): { from: string; to: string } {
   const now = new Date()
-  const q = Math.floor(now.getMonth() / 3)
-  const year = now.getFullYear()
-  const from = `${year}-${String(q * 3 + 1).padStart(2, '0')}-01`
-  const lastMonth = q * 3 + 3
-  const lastDay = new Date(year, lastMonth, 0).getDate()
-  const to = `${year}-${String(lastMonth).padStart(2, '0')}-${lastDay}`
+  const toYear = now.getFullYear()
+  const toMonth = now.getMonth() + 1
+  const toLastDay = new Date(toYear, toMonth, 0).getDate()
+  const to = `${toYear}-${String(toMonth).padStart(2, '0')}-${toLastDay}`
+
+  const fromDate = new Date(toYear, now.getMonth() - 11, 1)
+  const from = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-01`
+
   return { from, to }
 }
 
@@ -40,7 +42,7 @@ export function Dashboard() {
     [unpaidInvoices]
   )
 
-  const { from, to } = currentQuarter()
+  const { from, to } = last12Months()
   const vatReport = useMemo(
     () => buildVatReport(from, to, transactions),
     [from, to, transactions]
@@ -92,7 +94,7 @@ export function Dashboard() {
 
         <Card>
           <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-3">
-            Moms att betala (kv.)
+            Moms att betala (12 mån)
           </div>
           <div className={`text-2xl font-bold font-mono ${vatReport.nettoMoms >= 0 ? 'text-red-400' : 'text-emerald-400'}`}>
             {formatSEK(Math.abs(vatReport.nettoMoms))}
