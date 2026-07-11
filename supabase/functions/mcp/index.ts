@@ -199,6 +199,35 @@ Returns: utgåendeMoms (box 05), ingåendeMoms (box 48), nettoMoms (box 49, posi
       required: ['from_date', 'to_date'],
     },
   },
+  {
+    name: 'upload_attachment',
+    description:
+      'Laddar upp ett underlag (bild/PDF) som base64 och kopplar det till ett verifikat. ' +
+      'Returnerar den publika URL:en. Klienten ska komprimera bilder innan uppladdning (max 4 MB avkodad).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'string',
+          description: 'Base64-kodad fildata utan dataURL-prefix (utan "data:image/jpeg;base64,"-delen)',
+        },
+        filename: {
+          type: 'string',
+          description: 'Originalfilnamn — används bara för att härleda filändelse',
+        },
+        mime_type: {
+          type: 'string',
+          enum: ['image/jpeg', 'image/png', 'application/pdf'],
+          description: 'MIME-typ för filen',
+        },
+        transaction_id: {
+          type: 'string',
+          description: 'UUID för verifikationen att koppla bilagan till (valfritt)',
+        },
+      },
+      required: ['data', 'filename', 'mime_type'],
+    },
+  },
 ]
 
 // ---------------------------------------------------------------------------
@@ -408,6 +437,72 @@ async function executeTool(
     }, null, 2)
   }
 
+
+  if (name === 'upload_attachment') {
+    const { data: b64, filename, mime_type, transaction_id } = args as {
+      data: string
+      filename: string
+      mime_type: string
+      transaction_id?: string
+    }
+
+    const allowed = ['image/jpeg', 'image/png', 'application/pdf']
+    if (!allowed.includes(mime_type)) {
+      throw new Error(`Otillåten filtyp: ${mime_type}. Tillåtna: ${allowed.join(', ')}`)
+    }
+
+    // Verify transaction exists before touching storage
+    let currentBilagor: string[] = []
+    if (transaction_id) {
+      const { data: tx, error: txErr } = await supabase
+        .from('transactions')
+        .select('id, bilagor')
+        .eq('id', transaction_id)
+        .single()
+      if (txErr || !tx) throw new Error(`Verifikation ${transaction_id} hittades inte`)
+      currentBilagor = (tx as { id: string; bilagor: string[] }).bilagor ?? []
+    }
+
+    // Decode and validate size (atob is a Deno Deploy global)
+    const binary = atob(b64)
+    const MAX_BYTES = 4 * 1024 * 1024
+    if (binary.length > MAX_BYTES) {
+      throw new Error('Filen är för stor, komprimera först')
+    }
+
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+
+    const ext = filename.includes('.') ? filename.split('.').pop()!.toLowerCase() : 'bin'
+    const ts = Date.now()
+    const storagePath = transaction_id
+      ? `${transaction_id}/${ts}.${ext}`
+      : `unattached/${ts}.${ext}`
+
+    const { error: upErr } = await supabase.storage
+      .from('bilagor')
+      .upload(storagePath, bytes, { contentType: mime_type })
+    if (upErr) throw new Error(`Uppladdning misslyckades: ${upErr.message}`)
+
+    const { data: urlData } = supabase.storage.from('bilagor').getPublicUrl(storagePath)
+    const publicUrl = urlData.publicUrl
+
+    if (transaction_id) {
+      const updated = [...currentBilagor, publicUrl]
+      const { error: updErr } = await supabase
+        .from('transactions')
+        .update({ bilagor: updated })
+        .eq('id', transaction_id)
+      if (updErr) throw new Error(`Kunde inte koppla bilaga: ${updErr.message}`)
+    }
+
+    return JSON.stringify({
+      url: publicUrl,
+      path: storagePath,
+      ...(transaction_id ? { transaction_id, attached: true } : { attached: false }),
+    })
+  }
+
   throw new Error(`Unknown tool: ${name}`)
 }
 
@@ -487,7 +582,7 @@ Deno.serve(async (req) => {
   // Health check
   if (req.method === 'GET') {
     return new Response(
-      JSON.stringify({ ok: true, server: 'vantör-bokföring', tools: TOOLS.length, note: 'Attachments via web app only' }),
+      JSON.stringify({ ok: true, server: 'vantör-bokföring', tools: TOOLS.length, note: 'upload_attachment tool available' }),
       { headers: { ...CORS, 'Content-Type': 'application/json' } },
     )
   }
