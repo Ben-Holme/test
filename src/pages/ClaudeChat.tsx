@@ -19,7 +19,7 @@ Svara koncist och på svenska om inte användaren skriver på ett annat språk.
 Tillgängliga transaktionstyper:
 - faktura_ut: utgående faktura SE 25% moms (Dr 1510 / Kr 3001 + Kr 2610)
 - kvitto_se: inköpskvitto Sverige 25% moms (Dr 5400 + Dr 2640 / Kr 1920)
-- kvitto_eu_saas: EU/SaaS-tjänst t.ex. GitHub, Slack, AWS (Dr 6570 + Dr 2640 / Kr 1920 + Kr 4545)
+- kvitto_eu_saas: EU/SaaS-tjänst t.ex. GitHub, Slack, AWS (Dr 6570 + Dr 2645 / Kr 1920 + Kr 2614)
 - kvitto_eu_vara: EU-vara omvänd skattskyldighet
 - lön: löneutbetalning (Dr 7010 / Kr 1920)
 - manuell: övrigt`

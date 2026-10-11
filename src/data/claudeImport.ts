@@ -24,14 +24,16 @@ Tillgängliga transaktionstyper:
 - manuell: övrigt som inte passar ovan
 
 Konton (BAS):
-1510 – Kundfordringar, 1920 – Bankkonto, 2610 – Utgående moms 25%, 2640 – Ingående moms,
+1510 – Kundfordringar, 1920 – Bankkonto, 2610 – Utgående moms 25%,
+2614 – Utgående moms omvänd skattskyldighet 25%, 2640 – Ingående moms,
+2645 – Beräknad ingående moms på förvärv från utlandet,
 3001 – Försäljning tjänster SE 25%, 3004 – Försäljning EU, 3006 – Export,
-4545 – Förvärvsmoms utl. tjänster, 5400 – Förbrukningsinventarier, 6570 – Licenser & SaaS
+5400 – Förbrukningsinventarier, 6570 – Licenser & SaaS
 
 Bokföringsregler (rader = verifikationsrader):
 - faktura_ut: Dr 1510 (belopp+25%moms) / Kr 3001 (belopp) + Kr 2610 (25%moms)
 - kvitto_se: Dr 5400 (belopp) + Dr 2640 (25%moms) / Kr 1920 (belopp+moms)
-- kvitto_eu_saas: Dr 6570 (belopp) + Dr 2640 (25%moms) / Kr 1920 (belopp) + Kr 4545 (25%moms)
+- kvitto_eu_saas: Dr 6570 (belopp) + Dr 2645 (25%moms) / Kr 1920 (belopp) + Kr 2614 (25%moms)
 - lön: Dr 7010 (belopp) / Kr 1920 (belopp)
 - manuell: fyll rader manuellt
 
@@ -45,9 +47,9 @@ Returnera ENDAST giltig JSON utan markdown:
       "belopp": 99.00,
       "rader": [
         { "konto": 6570, "debet": 99.00, "kredit": 0 },
-        { "konto": 2640, "debet": 24.75, "kredit": 0 },
+        { "konto": 2645, "debet": 24.75, "kredit": 0 },
         { "konto": 1920, "debet": 0, "kredit": 99.00 },
-        { "konto": 4545, "debet": 0, "kredit": 24.75 }
+        { "konto": 2614, "debet": 0, "kredit": 24.75 }
       ]
     }
   ]

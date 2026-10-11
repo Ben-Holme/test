@@ -35,7 +35,9 @@ export function Dashboard() {
     () =>
       -(
         accountBalance(2610, transactions) +
+        accountBalance(2614, transactions) +
         accountBalance(2640, transactions) +
+        accountBalance(2645, transactions) +
         accountBalance(4545, transactions)
       ),
     [transactions]

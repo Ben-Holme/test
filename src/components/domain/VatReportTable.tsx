@@ -11,13 +11,13 @@ export function VatReportTable({ report }: VatReportTableProps) {
       box: '05',
       label: 'Utgående moms, 25%',
       value: report.utgåendeMoms,
-      note: 'Konto 2610 + 4545',
+      note: 'Konto 2610 + 2614',
     },
     {
       box: '48',
       label: 'Ingående moms att dra av',
       value: report.ingåendeMoms,
-      note: 'Konto 2640',
+      note: 'Konto 2640 + 2645',
     },
     {
       box: '49',

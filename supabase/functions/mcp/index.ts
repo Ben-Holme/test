@@ -59,7 +59,9 @@ const BAS_ACCOUNTS = [
   { id: 1920, namn: 'Plusgiro', typ: 'tillgång' },
   { id: 1930, namn: 'Bankkonto', typ: 'tillgång' },
   { id: 2610, namn: 'Utgående moms 25%', typ: 'skuld' },
+  { id: 2614, namn: 'Utgående moms omvänd skattskyldighet 25%', typ: 'skuld' },
   { id: 2640, namn: 'Ingående moms', typ: 'tillgång' },
+  { id: 2645, namn: 'Beräknad ingående moms på förvärv från utlandet', typ: 'tillgång' },
   { id: 2650, namn: 'Momsredovisning', typ: 'skuld' },
   { id: 3001, namn: 'Försäljning tjänster SE 25%', typ: 'intäkt' },
   { id: 3004, namn: 'Försäljning tjänster EU (omvänd)', typ: 'intäkt' },
@@ -249,11 +251,14 @@ function buildVatReport(fromDate: string, toDate: string, transactions: Transact
   )
   const utgående = relevant.flatMap((t) => t.rader).filter((r) => r.konto === 2610).reduce((s, r) => s + r.kredit, 0)
   const ingående = relevant.flatMap((t) => t.rader).filter((r) => r.konto === 2640).reduce((s, r) => s + r.debet, 0)
-  const förvärvs = relevant.flatMap((t) => t.rader).filter((r) => r.konto === 4545).reduce((s, r) => s + r.kredit, 0)
+  // Reverse-charge VAT on foreign acquisitions. 4545 is the legacy account used
+  // before 2614/2645 existed — kept so old transactions still count correctly.
+  const omvändUtgående = relevant.flatMap((t) => t.rader).filter((r) => r.konto === 2614 || r.konto === 4545).reduce((s, r) => s + r.kredit, 0)
+  const omvändIngående = relevant.flatMap((t) => t.rader).filter((r) => r.konto === 2645).reduce((s, r) => s + r.debet, 0)
   return {
-    utgåendeMoms: utgående + förvärvs,
-    ingåendeMoms: ingående,
-    nettoMoms: utgående + förvärvs - ingående,
+    utgåendeMoms: utgående + omvändUtgående,
+    ingåendeMoms: ingående + omvändIngående,
+    nettoMoms: utgående + omvändUtgående - ingående - omvändIngående,
   }
 }
 

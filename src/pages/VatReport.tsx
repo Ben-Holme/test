@@ -72,7 +72,7 @@ export function VatReport() {
 
       <div className="mt-4 p-4 bg-neutral-900 border border-neutral-800 rounded-lg text-xs text-neutral-500">
         <strong className="text-neutral-400">Obs:</strong> Rapporten inkluderar alla bokförda och betalda
-        transaktioner för vald period. Förvärvsmoms (konto 4545) ingår i utgående moms.
+        transaktioner för vald period. Omvänd skattskyldighet (konto 2614/2645, tidigare 4545) ingår i moms-rapporten.
       </div>
     </div>
   )

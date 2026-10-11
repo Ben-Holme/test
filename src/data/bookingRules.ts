@@ -38,14 +38,14 @@ export function raderKvittoSE(belopp: number): TransaktionsRad[] {
   ]
 }
 
-/** SaaS/EU service: Dr 6570 + Dr 2640 / Kr 1930 + Kr 4545 */
+/** SaaS/EU service (reverse charge): Dr 6570 + Dr 2645 / Kr 1930 + Kr 2614 */
 export function raderKvittoEUSaaS(belopp: number): TransaktionsRad[] {
   const moms = Math.round(belopp * 0.25 * 100) / 100
   return [
     { konto: 6570, debet: belopp, kredit: 0 },
-    { konto: 2640, debet: moms, kredit: 0 },
+    { konto: 2645, debet: moms, kredit: 0 },
     { konto: 1930, debet: 0, kredit: belopp },
-    { konto: 4545, debet: 0, kredit: moms },
+    { konto: 2614, debet: 0, kredit: moms },
   ]
 }
 
