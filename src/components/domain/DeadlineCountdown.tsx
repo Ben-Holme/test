@@ -42,6 +42,13 @@ export function DeadlineCountdown() {
           ))}
         </div>
       )}
+
+      {!dates.some((d) => d.key === 'moms') && (
+        <div className="mt-4 pt-4 border-t border-neutral-800 text-xs text-amber-400">
+          Moms &amp; inkomstdeklaration (helårsmoms): datum ej inlagt — kontrollera i Skatteverkets app under
+          &quot;Viktiga datum&quot;.
+        </div>
+      )}
     </Card>
   )
 }
