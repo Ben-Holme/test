@@ -6,6 +6,8 @@
  *   https://<project>.supabase.co/functions/v1/mcp
  * with header:
  *   Authorization: Bearer <supabase-anon-key>
+ *
+ * (redeploy trigger: SUPABASE_ACCESS_TOKEN secret rotated)
  */
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
