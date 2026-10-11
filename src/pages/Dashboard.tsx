@@ -5,6 +5,7 @@ import { accountBalance } from '../lib/ledger'
 import { formatSEK } from '../lib/formatters'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
+import { DeadlineCountdown } from '../components/domain/DeadlineCountdown'
 
 export function Dashboard() {
   const { transactions, isLoading } = useTransactions()
@@ -63,7 +64,9 @@ export function Dashboard() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <DeadlineCountdown />
+
         <Card>
           <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-3">
             Banksaldo (1930)
