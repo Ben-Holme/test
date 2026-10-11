@@ -6,8 +6,6 @@
  *   https://<project>.supabase.co/functions/v1/mcp
  * with header:
  *   Authorization: Bearer <supabase-anon-key>
- *
- * (redeploy trigger: SUPABASE_ACCESS_TOKEN secret rotated)
  */
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -87,6 +85,37 @@ const BAS_ACCOUNTS = [
 ]
 
 // ---------------------------------------------------------------------------
+// Attachment validation — type is detected from the file's own magic bytes,
+// never trusted from a Content-Type header or a caller-supplied hint, so a
+// mislabeled or malicious upload can't slip into the bucket.
+// ---------------------------------------------------------------------------
+
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024 // 10 MB
+
+function sniffAttachmentType(bytes: Uint8Array): { ext: string; mime: string } | null {
+  if (bytes.length >= 4 && bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+    return { ext: 'pdf', mime: 'application/pdf' } // %PDF
+  }
+  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+    return { ext: 'png', mime: 'image/png' }
+  }
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return { ext: 'jpg', mime: 'image/jpeg' }
+  }
+  if (bytes.length >= 6 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
+    return { ext: 'gif', mime: 'image/gif' } // GIF8
+  }
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) {
+    return { ext: 'webp', mime: 'image/webp' } // RIFF....WEBP
+  }
+  return null
+}
+
+// ---------------------------------------------------------------------------
 // MCP tool definitions (JSON Schema — note: inputSchema, not input_schema)
 // ---------------------------------------------------------------------------
 
@@ -154,6 +183,50 @@ Rows MUST balance: sum(debet) = sum(kredit).`,
         },
       },
       required: ['datum', 'beskrivning', 'typ', 'rader'],
+    },
+  },
+  {
+    name: 'update_transaction',
+    description: `Edit the description and/or journal rows of an existing DRAFT (utkast) transaction in place — no delete+recreate needed.
+Only works when the transaction's status is utkast; bokförd/betald transactions must go through update_transaction_status or delete_transaction instead.
+Omit \`beskrivning\` or \`rader\` to leave that field unchanged. If \`rader\` is given it replaces all rows and must balance: sum(debet) = sum(kredit).`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Transaction UUID' },
+        beskrivning: { type: 'string', description: 'New description (optional)' },
+        rader: {
+          type: 'array',
+          description: 'Replacement journal rows — must balance (optional)',
+          items: {
+            type: 'object',
+            properties: {
+              konto: { type: 'number', description: 'BAS account number e.g. 6570' },
+              debet: { type: 'number', minimum: 0 },
+              kredit: { type: 'number', minimum: 0 },
+            },
+            required: ['konto', 'debet', 'kredit'],
+          },
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'upload_attachment',
+    description: `Upload a receipt/invoice attachment (PDF or image) and link it to an existing transaction.
+Provide exactly one of:
+  - \`source_url\`: the server fetches it directly — the robust path, works with e.g. Stripe receipt links.
+  - \`file_base64\`: base64-encoded file data (a data: URI prefix is stripped automatically) — fallback for files attached directly in chat. Slower and less reliable for large files.
+File type is detected from the actual file content (not any provided hint) and restricted to PDF, PNG, JPEG, GIF or WEBP. Max size ${MAX_ATTACHMENT_BYTES / 1024 / 1024} MB.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        transaction_id: { type: 'string', description: 'Transaction UUID to attach the file to' },
+        source_url: { type: 'string', description: 'URL the server should fetch the file from' },
+        file_base64: { type: 'string', description: 'Base64-encoded file data (fallback for chat attachments)' },
+      },
+      required: ['transaction_id'],
     },
   },
   {
@@ -364,6 +437,127 @@ async function executeTool(
     return `Verifikation skapad: ${id}`
   }
 
+  if (name === 'update_transaction') {
+    let { id, beskrivning, rader } = args as {
+      id: string
+      beskrivning?: string
+      rader?: TransaktionsRad[] | string
+    }
+
+    if (!id) throw new Error('`id` is required')
+
+    if (typeof rader === 'string') {
+      try {
+        rader = JSON.parse(rader)
+      } catch {
+        throw new Error('Invalid `rader`: expected an array of journal rows, got a string that is not valid JSON')
+      }
+    }
+
+    if (rader !== undefined) {
+      if (!Array.isArray(rader)) throw new Error('`rader` must be an array of journal rows')
+      if (rader.length === 0) throw new Error('`rader` cannot be empty')
+
+      rader.forEach((r, i) => {
+        if (r == null || typeof r !== 'object') throw new Error(`rader[${i}] is not a valid row object`)
+        if (r.konto === undefined || r.konto === null) throw new Error(`rader[${i}] is missing \`konto\``)
+        if (r.debet === undefined || r.debet === null) throw new Error(`rader[${i}] is missing \`debet\``)
+        if (r.kredit === undefined || r.kredit === null) throw new Error(`rader[${i}] is missing \`kredit\``)
+      })
+
+      const sumDebet = rader.reduce((s, r) => s + Number(r.debet), 0)
+      const sumKredit = rader.reduce((s, r) => s + Number(r.kredit), 0)
+      if (Math.round(sumDebet * 100) !== Math.round(sumKredit * 100)) {
+        throw new Error(
+          `Rader are not balanced: sum(debet)=${sumDebet.toFixed(2)} !== sum(kredit)=${sumKredit.toFixed(2)}`,
+        )
+      }
+    }
+
+    if (beskrivning === undefined && rader === undefined) {
+      throw new Error('Provide at least one of `beskrivning` or `rader` to update')
+    }
+
+    const { error } = await supabase.rpc('update_transaction_with_rows', {
+      p_id: id,
+      p_beskrivning: beskrivning ?? null,
+      p_rader: rader ?? null,
+    })
+    if (error) throw new Error(error.message)
+    return `Verifikation ${id} uppdaterad`
+  }
+
+  if (name === 'upload_attachment') {
+    const { transaction_id, source_url, file_base64 } = args as {
+      transaction_id: string
+      source_url?: string
+      file_base64?: string
+    }
+
+    if (!transaction_id) throw new Error('`transaction_id` is required')
+    if (!source_url && !file_base64) throw new Error('Provide either `source_url` or `file_base64`')
+    if (source_url && file_base64) throw new Error('Provide only one of `source_url` or `file_base64`, not both')
+
+    const { data: txRow, error: txError } = await supabase
+      .from('transactions')
+      .select('id, bilagor')
+      .eq('id', transaction_id)
+      .single()
+    if (txError || !txRow) throw new Error(txError?.message ?? `Transaction ${transaction_id} not found`)
+
+    let bytes: Uint8Array
+
+    if (source_url) {
+      let res: Response
+      try {
+        res = await fetch(source_url)
+      } catch (e) {
+        throw new Error(`Could not fetch source_url: ${e instanceof Error ? e.message : String(e)}`)
+      }
+      if (!res.ok) throw new Error(`source_url returned ${res.status} ${res.statusText}`)
+      const contentLength = res.headers.get('content-length')
+      if (contentLength && Number(contentLength) > MAX_ATTACHMENT_BYTES) {
+        throw new Error(`File too large: ${contentLength} bytes (max ${MAX_ATTACHMENT_BYTES})`)
+      }
+      bytes = new Uint8Array(await res.arrayBuffer())
+    } else {
+      const base64 = file_base64!.replace(/^data:[^;]+;base64,/, '')
+      try {
+        bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+      } catch {
+        throw new Error('`file_base64` is not valid base64 data')
+      }
+    }
+
+    if (bytes.byteLength === 0) throw new Error('File is empty')
+    if (bytes.byteLength > MAX_ATTACHMENT_BYTES) {
+      throw new Error(`File too large: ${bytes.byteLength} bytes (max ${MAX_ATTACHMENT_BYTES})`)
+    }
+
+    const detected = sniffAttachmentType(bytes)
+    if (!detected) {
+      throw new Error('Unsupported file type — only PDF and images (PNG/JPEG/GIF/WEBP) are allowed')
+    }
+
+    const path = `${transaction_id}/${Date.now()}.${detected.ext}`
+    const { error: uploadError } = await supabase.storage
+      .from('bilagor')
+      .upload(path, bytes, { contentType: detected.mime })
+    if (uploadError) throw new Error(uploadError.message)
+
+    const { data: publicUrlData } = supabase.storage.from('bilagor').getPublicUrl(path)
+    const url = publicUrlData.publicUrl
+
+    const existingBilagor = (txRow as { bilagor: string[] }).bilagor ?? []
+    const { error: updateError } = await supabase
+      .from('transactions')
+      .update({ bilagor: [...existingBilagor, url] })
+      .eq('id', transaction_id)
+    if (updateError) throw new Error(updateError.message)
+
+    return `Bilaga uppladdad och kopplad till ${transaction_id}: ${url}`
+  }
+
   if (name === 'update_transaction_status') {
     const { error } = await supabase
       .from('transactions')
@@ -494,7 +688,7 @@ Deno.serve(async (req) => {
   // Health check
   if (req.method === 'GET') {
     return new Response(
-      JSON.stringify({ ok: true, server: 'vantör-bokföring', tools: TOOLS.length, note: 'Attachments via web app only' }),
+      JSON.stringify({ ok: true, server: 'vantör-bokföring', tools: TOOLS.length }),
       { headers: { ...CORS, 'Content-Type': 'application/json' } },
     )
   }
